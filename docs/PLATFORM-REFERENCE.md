@@ -1,3 +1,9 @@
+# Archived starter reference
+
+This file preserves the original Vinext/Sites starter documentation. It is historical technical context, not AQODH setup instructions, current schema documentation, an authorization grant or a verified description of current product behavior. Statements such as an empty schema or optional authentication describe the starter before AQODH changes. Follow [the current README](../README.md), [architecture](../ARCHITECTURE.md) and [status](../TRIAL-STATUS.md). External platform documentation and plugin paths must be checked against the current environment before use.
+
+---
+
 # vinext-starter
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.

@@ -50,6 +50,13 @@
       "when": 1792783952429,
       "tag": "0006_organization_tiers_meetings",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1792827470600,
+      "tag": "0007_platform_role_separation",
+      "breakpoints": true
     }
   ]
 }

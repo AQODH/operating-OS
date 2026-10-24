@@ -1,3 +1,4 @@
+import {requireOrganizationActor,listOrganizationAccess,requireOrganizationAssignee,requireManageableOrganizationMembership} from '../../../lib/platform-roles.mjs';
 import {readDigital,mutateDigital} from '../../../lib/digital-server';
 import {meetingPosting} from '../../../lib/tier-one.mjs';
 import { requireTenant } from '../../../lib/tenancy.mjs';
@@ -11,15 +12,15 @@ const db = () => { if (!env.DB)
     throw new Error('Database is unavailable'); return env.DB; };
 const id = () => crypto.randomUUID();
 async function context(req: Request) { const user = await getChatGPTUser(); if (!user)
-    throw new Error('Please sign in to continue.'); const tenant = new URL(req.url).searchParams.get('tenant'); const access = tenant ? await requireTenant(db(), user, tenant) : { role: 'owner' }; return { user, tenant, role: access.role,organization:'organization' in access?access.organization:null,memberId:'memberId' in access?access.memberId:undefined }; }
+    throw new Error('Please sign in to continue.'); await requireOrganizationActor(db(),user); const tenant = new URL(req.url).searchParams.get('tenant'); const access = tenant ? await requireTenant(db(), user, tenant) : { role: 'organization_user' }; return { user, tenant, role: access.role,organization:'organization' in access?access.organization:null,memberId:'memberId' in access?access.memberId:undefined }; }
 export async function GET(req: Request) { try {
     const { user, tenant, role,organization,memberId } = await context(req);
-    const organizations = (await db().prepare('SELECT DISTINCT o.* FROM organizations o LEFT JOIN memberships m ON m.tenant=o.id WHERE o.owner=? OR m.email=? ORDER BY o.created').bind(user.userId, user.email.toLowerCase()).all()).results;
+    const organizations = await listOrganizationAccess(db(), user);
     if (!tenant)
         return privateJSON({ organizations });
     if(organization&&[2,3].includes(organization.tier))return privateJSON(await readDigital(db(),tenant,{role,organization,memberId},organizations));
     const [r, t, e, a] = await Promise.all([db().prepare('SELECT * FROM records WHERE tenant=? ORDER BY created DESC').bind(tenant).all(), db().prepare('SELECT * FROM transactions WHERE tenant=? ORDER BY created DESC').bind(tenant).all(), db().prepare('SELECT * FROM entries WHERE tenant=?').bind(tenant).all(), db().prepare('SELECT * FROM audit WHERE tenant=? ORDER BY created DESC LIMIT 200').bind(tenant).all()]);
-    const memberships = role === 'owner' ? (await db().prepare('SELECT id,email,role FROM memberships WHERE tenant=?').bind(tenant).all()).results : [];
+    const memberships = role === 'organization_admin' ? (await db().prepare('SELECT id,email,role FROM memberships WHERE tenant=?').bind(tenant).all()).results : [];
     const meetingTransactions=(await db().prepare('SELECT * FROM meeting_transactions WHERE tenant=?').bind(tenant).all()).results;return privateJSON({ organizations, role, memberships,meetingTransactions, records: r.results.map((v: any) => ({ ...v, data: JSON.parse(v.data) })), transactions: t.results, entries: e.results, audit: a.results });
 }
 catch (e) {
@@ -38,11 +39,7 @@ export async function POST(req: Request) {
         const b = db();
         const text = (v: any, max = 200) => { if (typeof v !== 'string' || !v.trim() || v.length > max)
             throw new Error('Required text is missing or too long'); return v.trim(); };
-        if (body.action === 'organization') {
-            const tier=body.tier??1;if(!Number.isInteger(tier)||![1,2,3].includes(tier))throw new Error('Select exactly one tier: 1, 2 or 3');const oid = id();
-            await b.prepare('INSERT INTO organizations(id,owner,name,created,tier) VALUES(?,?,?,?,?)').bind(oid, user.userId, text(body.name), now,tier).run();
-            return privateJSON({ id: oid });
-        }
+        if (body.action === 'organization') throw new Error('Organization registration belongs to platform administration.');
         if (!tenant)
             throw new Error('Choose an organization');if(organization&&[2,3].includes(organization.tier))return privateJSON(await mutateDigital(b,tenant,{role,organization,memberId},user,body));if(organization?.tier!==1)throw new Error('This organization has a different tier. Its features are not available in the Tier 1 build.');
         const log = (action: string, target: string) => b.prepare('INSERT INTO audit(id,tenant,actor,action,target,created) VALUES(?,?,?,?,?,?)').bind(id(), tenant, user.userId, action, target, now);
@@ -68,6 +65,7 @@ export async function POST(req: Request) {
         if (body.action === 'invite') {
             authorize(role, 'invite');
             const email = text(body.email).toLowerCase();
+            await requireOrganizationAssignee(b,email);await requireManageableOrganizationMembership(b,tenant,email);
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
                 throw new Error('Invalid email');
             if (!['officer', 'treasurer', 'viewer'].includes(body.role))
@@ -149,6 +147,7 @@ export async function POST(req: Request) {
         if (body.action === 'revoke') {
             authorize(role, 'invite');
             const email = text(body.email).toLowerCase();
+            await requireManageableOrganizationMembership(b,tenant,email);
             await b.batch([b.prepare('DELETE FROM memberships WHERE tenant=? AND email=?').bind(tenant, email), log('revoke access', email)]);
             return privateJSON({ ok: true });
         }
@@ -271,4 +270,3 @@ export async function POST(req: Request) {
 }
 
 function privateJSON(data:any,init:ResponseInit={}){return Response.json(data,{...init,headers:{'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}})}
-

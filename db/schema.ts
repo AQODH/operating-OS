@@ -10,3 +10,17 @@ export const guards = sqliteTable('guards', { id: text('id').primaryKey(), ok: i
 export const seals = sqliteTable('seals', { transaction: text('transaction').primaryKey().references(() => transactions.id), created: text('created').notNull() });
 
 export const meetingTransactions=sqliteTable('meeting_transactions',{transaction:text('transaction').primaryKey().references(()=>transactions.id),meeting:text('meeting').notNull().references(()=>records.id),tenant:text('tenant').notNull().references(()=>organizations.id)},t=>[index('meeting_transactions_tenant_meeting').on(t.tenant,t.meeting)]);
+
+export const platformRoles = sqliteTable('platform_roles', {
+  userId: text('user_id').primaryKey(),
+  email: text('email').notNull(),
+  role: text('role').notNull(),
+  created: text('created').notNull(),
+}, t => [uniqueIndex('platform_role_email').on(t.email), check('platform_role_valid', sql`${t.role} = 'platform_admin'`)]);
+export const platformAudit = sqliteTable('platform_audit', {
+  id: text('id').primaryKey(),
+  actor: text('actor').notNull(),
+  action: text('action').notNull(),
+  target: text('target').notNull(),
+  created: text('created').notNull(),
+});

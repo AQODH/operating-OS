@@ -35,6 +35,8 @@ Read these sources in order:
 5. TIER-ONE-GUIDE.md or TIER-TWO-THREE-GUIDE.md for the affected workflow.
 6. VERIFICATION.md and relevant tests for existing evidence.
 
+Use [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md) for document ownership and update triggers. Team requirements in this file are normative; they do not certify that every existing implementation meets them. Record implementation gaps in TRIAL-STATUS.md rather than describing a policy as an enforced control. Role titles identify responsibilities, not named appointments or completed approvals.
+
 Inspect the actual implementation and working tree before changing files. If documentation contradicts current behavior, investigate and reconcile it in the affected change. Do not implement from an outdated roadmap alone.
 
 ## 4. Implementation map
@@ -177,6 +179,8 @@ Before changing financial behavior, specify at least one concrete before/after e
 - Explain the limitations of device drafts. Do not claim offline operation, synchronization or payment connectivity without implementing and verifying it.
 
 ## 13. Verification and review
+
+Use [the developer handbook](docs/DEVELOPER-HANDBOOK.md) and [troubleshooting runbook](docs/TROUBLESHOOTING.md) for onboarding. Run npm run doctor for read-only setup diagnostics and npm run docs:check for local reference validation. The [API contract](docs/API.md), [data dictionary](docs/DATA-DICTIONARY.md) and [operations runbook](docs/OPERATIONS.md) document interfaces and handoff boundaries. Use [.github/pull_request_template.md](.github/pull_request_template.md) for evidence.
 
 Use Node.js 24 for the documented project setup. Inspect package.json and README.md before changing the toolchain.
 

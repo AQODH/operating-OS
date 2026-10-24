@@ -1,16 +1,48 @@
-# Verification — 23 October 2026
+# Verification evidence and limitations
 
-34 automated tests passed. Type checking passes. Live complete-cycle testing passes after the edition and meeting refactor.
+Initial documentation audit: 24 October 2026. The historical record below organizes previous implementation evidence and does not represent independent review. A subsequent [onboarding verification](docs/ONBOARDING-VERIFICATION.md) on the same date freshly reran tests/type checking, built an isolated clean installation, applied all seven migrations, exercised all three editions over local HTTP and checked local recovery. Consult that record for current environment and limitations. The previous document was dated 23 October 2026. Raw logs and screenshots from every historical check are not all retained in the repository.
 
-The HTTP check records savings for three synthetic members, separate emergency contributions, a witnessed loan approval, loan disbursement and repayment, a declined loan, a reversed fine, a fine received, an expense and an emergency payout. Over-reserved borrowing and overdrawn emergency funds are rejected. A mismatched closing count is rejected.
+## Recorded local evidence
 
-Share-out distributes UGX 59,900, carries UGX 2,000 emergency cash forward, clears cycle member savings and loan principal, and allows final meeting close. New entries after closure are rejected; an identical retry of an existing entry is safe. Registration rejects multiple tiers and Tier 2 is denied access to Tier 1 operations.
+| Check | Recorded result | Reproduction source | Scope limitation |
+| --- | --- | --- | --- |
+| Automated suite | 34 tests passed: 26 prior tests plus 8 digital tests. | npm test; tests/ | Synthetic/in-memory fixtures; not hosted identity or load testing. Count can change with later code. |
+| TypeScript | Passed. | npm run check | Type correctness is not financial acceptance. |
+| Production build | Passed. | npm run build | Artifact creation does not deploy or verify runtime authentication. |
+| Tier 1 HTTP cycle | Passed. | scripts/tier-one-cycle-test.mjs | Uses local mocked identity and creates synthetic money records. |
+| Tier 2 and Tier 3 HTTP workflows | Passed for each edition. | scripts/digital-trial-test.mjs | Owner/local identity exercises; separate-role behavior is tested in service fixtures. |
+| Browser checks | Selected registration, navigation, Tier 1 draft controls, digital savings forms, Tier 3 layout and explanation selection inspected. | Prior implementation-session observations; no committed browser runner. | Not a full accessibility, browser/device matrix or customer acceptance test. |
+| Local database recovery | Snapshot/count/balance comparison and integrity check previously reported successful. | scripts/recovery-drill.mjs | Local D1 SQLite only; no R2 evidence or hosted recovery guarantee. |
+| GitHub CI | Workflow defined. | .github/workflows/verify.yml | No successful remote run is claimed here. |
 
-Browser checks verified the Tier 1 navigation and a registration dropdown allowing exactly one selected tier. The Tier 2/3 choices now open digital workflows for their assigned edition.
+## Tier 1 worked example
 
-Earlier generic-prototype workflow tests are historical evidence only; they are not claims about the new Tier 1 routes. Real two-account authentication, independent reviews, fully offline reload/sync and hosted deployment are unverified or pending. See TIER-ONE-GUIDE.md.
+The local cycle exercise uses three synthetic members and records savings, separate emergency contributions, group loan approval/rejection, disbursement, repayment, a reversed fine, a fine received, an expense and an emergency payout. It rejects over-reserved loans, emergency overdraw and an incorrect closing count.
 
-Browser follow-up verified the open practice meeting and device draft save, restore and clear. No financial entry was submitted.
+The recorded outcome distributed UGX 59,900 by savings weight, retained UGX 2,000 emergency cash and cleared cycle savings and loan principal. Closure rejected new entries while preserving idempotent replay. Registration rejected multiple tiers; digital organizations could not use meeting operations.
 
-Tier 2/3 follow-up: eight additional digital tests exercise member-scoped reads and immediate revocation, role restrictions, cross-tenant record denial, request/confirmation separation, duplicate receipt rejection, restricted capital, savings holds, concurrent withdrawals, manual reviewer separation, policy snapshots, liquidity review, separate disbursement, repayment settlement and insight review notes. Live HTTP tests for each digital edition pass, including balanced journals and retry safety. Tier 1 complete-cycle regression passes after the digital addition. Browser inspection verified the Tier 3 overview and navigation. Actual separate-user hosted sign-in remains unverified.
+The practice-meeting browser check saved, restored and cleared an unposted device draft. It did not verify fully offline reload or background synchronization.
 
+## Digital evidence coverage
+
+Service tests in tests/digital.test.mjs cover member scoping and forged-member input, revocation, staff role separation, foreign-organization record denial, request versus confirmation, duplicate confirmation references and request keys, restricted share capital, savings holds, concurrent withdrawals, policy snapshots, liquidity fallback, disbursement, settlement and Tier 3 review notes without ledger changes.
+
+The local HTTP exercise confirms automatic approval without an approval-time posting, denied withdrawals above available savings, separate payout, exact settlement, replay safety, balanced journals, paid withdrawal status and Tier 3 analysis gating. It does not authenticate different real people.
+
+## Not yet established
+
+- Real separate-user sign-in, trusted production ingress and MFA behavior.
+- Independent accounting/security approval or legal/compliance acceptance.
+- Payment-provider authenticity, delivery, reconciliation and external messaging.
+- Customer opening-balance/loan migration and accepted exception handling.
+- Digital corrections, restructuring, write-offs or additional interest products.
+- Hosted deployment, full D1/R2 recovery, monitoring and recovery targets.
+- Measured concurrent production capacity or full offline synchronization.
+
+## Evidence required for the next release
+
+Record the source revision, date/time and timezone, environment, commands, actual output/result, side effects, reviewer and unresolved findings. Link retained logs or CI runs when available, excluding credentials/customer data. Do not replace historical results with a new green claim unless checks were actually rerun. For documentation-only work, validate references, commands against source and diff consistency; application tests need not run.
+
+## Role separation verification
+
+The later role change adds migration 0007 and eleven permission-boundary tests, bringing the suite to 45 passing tests. Type checking and the production build pass. Platform denial checks and all three organization workflows pass in separate local role previews; selected browser checks confirm the UI boundary. See [ROLE-SEPARATION.md](docs/ROLE-SEPARATION.md) for the current permissions and review status. No authentication feature, merge or deployment is claimed.
