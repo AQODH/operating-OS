@@ -1,0 +1,5 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {singleTier,meetingAttendance,countWitnesses,meetingPosting,shareOut} from '../lib/tier-one.mjs';
+test('registration accepts exactly one scalar tier',()=>{for(const n of [1,2,3])assert.equal(singleTier(n),n);for(const n of [[1,2],'1',0,4,null])assert.throws(()=>singleTier(n))});
+test('quorum and independent counters are required',()=>{assert.throws(()=>meetingAttendance(['a'],['a','b','c']));assert.equal(meetingAttendance(['a','b','c'],['a','b','c']).required,3);assert.throws(()=>countWitnesses(['a','a'],['a','b']));assert.deepEqual(countWitnesses(['a','b'],['a','b']),['a','b'])});
+test('social money is kept out of the lending cash account',()=>{const lines=meetingPosting('socialContribution',1000);assert.equal(lines[0].account,'social_cash');assert.equal(lines.reduce((s,l)=>s+l.amount,0),0)});
+test('share-out preserves every UGX and uses savings weights',()=>{const plan=shareOut(101,{a:1,b:2,c:3});assert.equal(plan.reduce((s,r)=>s+r.amount,0),101);assert.deepEqual(plan.map(r=>r.amount),[17,34,50]);assert.throws(()=>shareOut(100,{}))});

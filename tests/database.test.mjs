@@ -1,0 +1,9 @@
+import {DatabaseSync} from 'node:sqlite';
+import fs from 'node:fs';
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+function setup(){const db=new DatabaseSync(':memory:');for(const name of fs.readdirSync('drizzle').filter(n=>n.endsWith('.sql')).sort())db.exec(fs.readFileSync('drizzle/'+name,'utf8'));db.exec("INSERT INTO organizations(id,owner,name,created) VALUES('org','owner','Test','now');INSERT INTO transactions VALUES('t','org','key','test',NULL,NULL,NULL,'owner','now');INSERT INTO entries VALUES('a','t','org','cash',100);INSERT INTO entries VALUES('b','t','org','income',-100);INSERT INTO seals VALUES('t','now');");return db}
+test('posted journal cannot be edited deleted or extended',()=>{const d=setup();for(const sql of ["UPDATE entries SET amount=200 WHERE id='a'","DELETE FROM entries WHERE id='a'","INSERT INTO entries VALUES('c','t','org','cash',10)","DELETE FROM transactions WHERE id='t'","DELETE FROM seals WHERE \"transaction\"='t'"])assert.throws(()=>d.exec(sql));d.close()});
+test('cross tenant entry and unbalanced journal are rejected',()=>{const d=setup();d.exec("INSERT INTO transactions VALUES('u','org','other','test',NULL,NULL,NULL,'owner','now')");assert.throws(()=>d.exec("INSERT INTO entries VALUES('x','u','other','cash',100)"));d.exec("INSERT INTO entries VALUES('x','u','org','cash',100)");assert.throws(()=>d.exec("INSERT INTO seals VALUES('u','now')"));d.close()});
+test('optimistic guard aborts stale financial transaction',()=>{const d=setup();assert.throws(()=>d.exec("INSERT INTO guards VALUES('g',0)"));d.exec("INSERT INTO guards VALUES('g',1)");d.close()});
+test('ledger refuses historical debit volume above exact arithmetic range',()=>{const d=setup();d.exec("INSERT INTO transactions VALUES('large','org','large','test',NULL,NULL,NULL,'owner','now')");assert.throws(()=>d.prepare('INSERT INTO entries VALUES(?,?,?,?,?)').run('large-e','large','org','cash',Number.MAX_SAFE_INTEGER));d.close()});

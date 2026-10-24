@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1792767157218,
+      "tag": "0000_lethal_namorita",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792767224687,
+      "tag": "0001_calm_wraith",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792767721640,
+      "tag": "0002_financial_guards",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792767746270,
+      "tag": "0003_ledger_controls",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792769761872,
+      "tag": "0004_tenant_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792771037087,
+      "tag": "0005_ledger_safe_range",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792783952429,
+      "tag": "0006_organization_tiers_meetings",
+      "breakpoints": true
+    }
+  ]
+}
